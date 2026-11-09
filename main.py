@@ -1,25 +1,52 @@
-
 import cv2
+
 from src.hand_detector import HandDetector
+from src.gesture_recognizer import GestureRecognizer
 
-detector = HandDetector()
-camara = cv2.VideoCapture(0)
 
-while True:
-    correcto, frame = camara.read()
+def main():
+    detector = HandDetector()
+    reconocedor = GestureRecognizer()
+    camara = cv2.VideoCapture(0)
 
-    if not correcto:
-        print("No se pudo acceder a la cámara")
-        break
+    if not camara.isOpened():
+        print("No se pudo abrir la cámara")
+        detector.cerrar()
+        return
 
-    frame = cv2.flip(frame, 1)
-    mano = detector.detectar(frame)
+    try:
+        while True:
+            correcto, frame = camara.read()
 
-    cv2.imshow("Detector de manos", frame)
+            if not correcto:
+                print("No se pudo leer la cámara")
+                break
 
-    if cv2.waitKey(1) & 0xFF == ord("q"):
-        break
+            frame = cv2.flip(frame, 1)
 
-camara.release()
-detector.cerrar()
-cv2.destroyAllWindows()
+            mano = detector.detectar(frame)
+            gesto = reconocedor.reconocer(mano)
+
+            cv2.putText(
+                frame,
+                f"Gesto: {gesto}",
+                (20, 50),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                1,
+                (0, 255, 0),
+                2,
+            )
+
+            cv2.imshow("Reconocimiento de gestos", frame)
+
+            if cv2.waitKey(1) & 0xFF == ord("q"):
+                break
+
+    finally:
+        camara.release()
+        detector.cerrar()
+        cv2.destroyAllWindows()
+
+
+if __name__ == "__main__":
+    main()
