@@ -1,4 +1,3 @@
-
 import cv2
 import mediapipe as mp
 
@@ -10,27 +9,30 @@ class HandDetector:
 
         self.hands = self.mp_hands.Hands(
             static_image_mode=False,
-            max_num_hands=1,
-            min_detection_confidence=0.7,
-            min_tracking_confidence=0.7
+            max_num_hands=2,
+            model_complexity=1,
+            min_detection_confidence=0.5,
+            min_tracking_confidence=0.5
         )
 
     def detectar(self, frame):
         imagen_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        imagen_rgb.flags.writeable = False
+
         resultados = self.hands.process(imagen_rgb)
 
+        manos = []
+
         if resultados.multi_hand_landmarks:
-            mano = resultados.multi_hand_landmarks[0]
+            for mano in resultados.multi_hand_landmarks:
+                self.mp_drawing.draw_landmarks(
+                    frame,
+                    mano,
+                    self.mp_hands.HAND_CONNECTIONS
+                )
+                manos.append(mano)
 
-            self.mp_drawing.draw_landmarks(
-                frame,
-                mano,
-                self.mp_hands.HAND_CONNECTIONS
-            )
-
-            return mano
-
-        return None
+        return manos
 
     def cerrar(self):
         self.hands.close()
