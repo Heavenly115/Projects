@@ -9,7 +9,6 @@ class CanvasController:
         self.ancho = ancho
         self.alto = alto
 
-        # Lienzo transparente representado mediante una máscara
         self.lienzo = np.zeros(
             (alto, ancho, 3),
             dtype=np.uint8
@@ -20,32 +19,70 @@ class CanvasController:
             dtype=np.uint8
         )
 
-        self.punto_anterior = None
-        self.color = (255, 0, 255)  # Morado en formato BGR
+        # Guardar un punto anterior para cada mano
+        self.puntos_anteriores = {}
+
+        # Colores en formato BGR
+        self.colores = {
+            "Left": (255, 0, 255),    # Morado
+            "Right": (0, 255, 255),   # Amarillo
+        }
+
         self.grosor = 5
 
-    def dibujar(self, punto):
-        if self.punto_anterior is not None:
+    def dibujar(self, punto, mano_id):
+        anterior = self.puntos_anteriores.get(mano_id)
+
+        if anterior is not None:
+            color = self.colores.get(
+                mano_id, (255, 255, 255)
+            )
+
             cv2.line(
                 self.lienzo,
-                self.punto_anterior,
+                anterior,
                 punto,
-                self.color,
+                color,
                 self.grosor
             )
 
             cv2.line(
                 self.mascara,
-                self.punto_anterior,
+                anterior,
                 punto,
                 255,
                 self.grosor
             )
 
-        self.punto_anterior = punto
+        self.puntos_anteriores[mano_id] = punto
 
-    def pausar(self):
-        self.punto_anterior = None
+    def dibujar_figura(self, figura, inicio, fin):
+        figura.dibujar(
+            self.lienzo,
+            inicio,
+            fin
+        )
+
+        mascara_temporal = np.zeros_like(self.lienzo)
+
+        figura.dibujar(
+            mascara_temporal,
+            inicio,
+            fin
+        )
+
+        pixeles = np.any(
+            mascara_temporal != 0,
+            axis=2
+        )
+
+        self.mascara[pixeles] = 255
+
+    def pausar(self, mano_id=None):
+        if mano_id is None:
+            self.puntos_anteriores.clear()
+        else:
+            self.puntos_anteriores.pop(mano_id, None)
 
     def limpiar(self):
         self.lienzo.fill(0)
@@ -71,7 +108,6 @@ class CanvasController:
 
         ruta = carpeta / nombre
 
-        # Guardar el dibujo sobre un fondo blanco
         imagen = np.full(
             (self.alto, self.ancho, 3),
             255,
