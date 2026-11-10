@@ -9,29 +9,23 @@ class Figura:
 
     def dibujar(self, lienzo, inicio, fin):
         raise NotImplementedError(
-            "Cada figura debe implementar el método dibujar"
+            "Cada figura debe implementar dibujar"
         )
 
 
 class Linea(Figura):
     def dibujar(self, lienzo, inicio, fin):
         cv2.line(
-            lienzo,
-            inicio,
-            fin,
-            self.color,
-            self.grosor
+            lienzo, inicio, fin,
+            self.color, self.grosor
         )
 
 
 class Rectangulo(Figura):
     def dibujar(self, lienzo, inicio, fin):
         cv2.rectangle(
-            lienzo,
-            inicio,
-            fin,
-            self.color,
-            self.grosor
+            lienzo, inicio, fin,
+            self.color, self.grosor
         )
 
 
@@ -45,11 +39,8 @@ class Circulo(Figura):
         )
 
         cv2.circle(
-            lienzo,
-            inicio,
-            radio,
-            self.color,
-            self.grosor
+            lienzo, inicio, radio,
+            self.color, self.grosor
         )
 
 

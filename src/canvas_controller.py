@@ -20,10 +20,8 @@ class CanvasController:
             dtype=np.uint8
         )
 
-        # Cada mano tiene su propio punto anterior.
         self.puntos_anteriores = {}
 
-        # Paleta en formato BGR de OpenCV.
         self.paleta = {
             "MORADO": (255, 0, 255),
             "ROJO": (0, 0, 255),
@@ -33,13 +31,11 @@ class CanvasController:
             "BLANCO": (255, 255, 255)
         }
 
-        # Colores independientes por mano.
         self.colores_manos = {
             "Left": "ROJO",
             "Right": "AZUL"
         }
 
-        # Mano cuyo color se modificará con el teclado.
         self.mano_seleccionada = "Left"
 
         self.grosor = 5
@@ -52,33 +48,37 @@ class CanvasController:
 
         self.mano_seleccionada = mano_id
 
-    def cambiar_color(self, nombre):
+    def cambiar_color(self, nombre, mano_id=None):
         if nombre not in self.paleta:
             raise ValueError("Color no disponible")
 
-        self.colores_manos[self.mano_seleccionada] = nombre
+        if mano_id is None:
+            mano_id = self.mano_seleccionada
 
-        # Cambiar color desactiva el borrador.
+        if mano_id not in self.colores_manos:
+            raise ValueError("Mano no disponible")
+
+        self.colores_manos[mano_id] = nombre
         self.modo_borrador = False
-        self.pausar()
+        self.pausar(mano_id)
 
     def obtener_color(self, mano_id):
         nombre = self.colores_manos.get(
             mano_id,
             "MORADO"
         )
-
         return self.paleta[nombre]
 
     def activar_borrador(self):
         self.modo_borrador = True
         self.pausar()
 
+    def desactivar_borrador(self):
+        self.modo_borrador = False
+        self.pausar()
+
     def cambiar_grosor(self, grosor):
-        self.grosor = max(
-            1,
-            min(30, grosor)
-        )
+        self.grosor = max(1, min(30, grosor))
         self.pausar()
 
     def dibujar(self, punto, mano_id):
@@ -86,7 +86,6 @@ class CanvasController:
 
         if anterior is not None:
             if self.modo_borrador:
-                # Quitar píxeles de la máscara.
                 cv2.line(
                     self.mascara,
                     anterior,

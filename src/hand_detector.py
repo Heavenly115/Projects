@@ -11,19 +11,15 @@ class HandDetector:
             static_image_mode=False,
             max_num_hands=2,
             model_complexity=1,
-            min_detection_confidence=0.4,
-            min_tracking_confidence=0.4
+            min_detection_confidence=0.5,
+            min_tracking_confidence=0.5
         )
 
     def detectar(self, frame):
-        imagen_rgb = cv2.cvtColor(
-            frame,
-            cv2.COLOR_BGR2RGB
-        )
-
+        imagen_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         imagen_rgb.flags.writeable = False
-        resultados = self.hands.process(imagen_rgb)
 
+        resultados = self.hands.process(imagen_rgb)
         manos = []
 
         if resultados.multi_hand_landmarks:
@@ -41,8 +37,7 @@ class HandDetector:
                 if resultados.multi_handedness:
                     etiqueta = (
                         resultados.multi_handedness[indice]
-                        .classification[0]
-                        .label
+                        .classification[0].label
                     )
 
                 manos.append({
