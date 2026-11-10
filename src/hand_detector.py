@@ -22,7 +22,6 @@ class HandDetector:
         )
 
         imagen_rgb.flags.writeable = False
-
         resultados = self.hands.process(imagen_rgb)
 
         manos = []

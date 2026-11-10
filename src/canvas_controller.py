@@ -1,7 +1,8 @@
-import cv2
-import numpy as np
 from datetime import datetime
 from pathlib import Path
+
+import cv2
+import numpy as np
 
 
 class CanvasController:
@@ -19,51 +20,120 @@ class CanvasController:
             dtype=np.uint8
         )
 
-        # Guardar un punto anterior para cada mano
+        # Cada mano tiene su propio punto anterior.
         self.puntos_anteriores = {}
 
-        # Colores en formato BGR
-        self.colores = {
-            "Left": (255, 0, 255),    # Morado
-            "Right": (0, 255, 255),   # Amarillo
+        # Paleta en formato BGR de OpenCV.
+        self.paleta = {
+            "MORADO": (255, 0, 255),
+            "ROJO": (0, 0, 255),
+            "VERDE": (0, 255, 0),
+            "AZUL": (255, 0, 0),
+            "AMARILLO": (0, 255, 255),
+            "BLANCO": (255, 255, 255)
         }
 
+        # Colores independientes por mano.
+        self.colores_manos = {
+            "Left": "ROJO",
+            "Right": "AZUL"
+        }
+
+        # Mano cuyo color se modificará con el teclado.
+        self.mano_seleccionada = "Left"
+
         self.grosor = 5
+        self.grosor_borrador = 35
+        self.modo_borrador = False
+
+    def seleccionar_mano(self, mano_id):
+        if mano_id not in self.colores_manos:
+            raise ValueError("Mano no disponible")
+
+        self.mano_seleccionada = mano_id
+
+    def cambiar_color(self, nombre):
+        if nombre not in self.paleta:
+            raise ValueError("Color no disponible")
+
+        self.colores_manos[self.mano_seleccionada] = nombre
+
+        # Cambiar color desactiva el borrador.
+        self.modo_borrador = False
+        self.pausar()
+
+    def obtener_color(self, mano_id):
+        nombre = self.colores_manos.get(
+            mano_id,
+            "MORADO"
+        )
+
+        return self.paleta[nombre]
+
+    def activar_borrador(self):
+        self.modo_borrador = True
+        self.pausar()
+
+    def cambiar_grosor(self, grosor):
+        self.grosor = max(
+            1,
+            min(30, grosor)
+        )
+        self.pausar()
 
     def dibujar(self, punto, mano_id):
         anterior = self.puntos_anteriores.get(mano_id)
 
         if anterior is not None:
-            color = self.colores.get(
-                mano_id, (255, 255, 255)
-            )
+            if self.modo_borrador:
+                # Quitar píxeles de la máscara.
+                cv2.line(
+                    self.mascara,
+                    anterior,
+                    punto,
+                    0,
+                    self.grosor_borrador
+                )
+            else:
+                color = self.obtener_color(mano_id)
 
-            cv2.line(
-                self.lienzo,
-                anterior,
-                punto,
-                color,
-                self.grosor
-            )
+                cv2.line(
+                    self.lienzo,
+                    anterior,
+                    punto,
+                    color,
+                    self.grosor
+                )
 
-            cv2.line(
-                self.mascara,
-                anterior,
-                punto,
-                255,
-                self.grosor
-            )
+                cv2.line(
+                    self.mascara,
+                    anterior,
+                    punto,
+                    255,
+                    self.grosor
+                )
 
         self.puntos_anteriores[mano_id] = punto
 
-    def dibujar_figura(self, figura, inicio, fin):
+    def dibujar_figura(
+        self,
+        figura,
+        inicio,
+        fin,
+        mano_id
+    ):
+        figura.color = self.obtener_color(mano_id)
+        figura.grosor = self.grosor
+
         figura.dibujar(
             self.lienzo,
             inicio,
             fin
         )
 
-        mascara_temporal = np.zeros_like(self.lienzo)
+        mascara_temporal = np.zeros_like(
+            self.lienzo
+        )
 
         figura.dibujar(
             mascara_temporal,
@@ -82,7 +152,10 @@ class CanvasController:
         if mano_id is None:
             self.puntos_anteriores.clear()
         else:
-            self.puntos_anteriores.pop(mano_id, None)
+            self.puntos_anteriores.pop(
+                mano_id,
+                None
+            )
 
     def limpiar(self):
         self.lienzo.fill(0)
@@ -119,6 +192,8 @@ class CanvasController:
         )
 
         if not cv2.imwrite(str(ruta), imagen):
-            raise OSError("No se pudo guardar el dibujo")
+            raise OSError(
+                "No se pudo guardar el dibujo"
+            )
 
         return ruta
