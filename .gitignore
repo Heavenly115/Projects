@@ -1,18 +1,19 @@
-# Entornos virtuales
+# Entorno virtual
 .venv/
 venv/
 
-# Archivos Python
+# Archivos generados por Python
 __pycache__/
 *.pyc
+*.pyo
 
-# Pruebas
+# Pruebas y cobertura
 .pytest_cache/
 .coverage
 htmlcov/
 
-# Configuración local
-.env
+# Dibujos guardados
+dibujos/
 
-# Archivos temporales
-*.log
+# Archivos del editor
+.vscode/
